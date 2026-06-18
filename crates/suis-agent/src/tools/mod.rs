@@ -345,13 +345,23 @@ pub(crate) fn run_process_with_timeout(
         }
     };
 
-    // The killed group closes the pipes, so these joins return promptly.
+    if timed_out {
+        // Return as soon as the deadline fires. The process-group kill normally
+        // closes the pipes, but a command can deliberately detach a descendant
+        // into another process group/session while leaving stdout/stderr
+        // inherited. Waiting for the reader threads in that case extends a 30s
+        // timeout until the detached process exits. Dropping the handles
+        // detaches those short-lived readers; they finish when the inherited
+        // descriptors eventually close, while the tool reports the timeout on
+        // time.
+        return Err(format!("command timed out after {}s", timeout.as_secs()));
+    }
+
+    // The child exited normally, so its pipes are closed and these joins return
+    // promptly with the captured output.
     let stdout_buf = out_reader.join().unwrap_or_default();
     let stderr_buf = err_reader.join().unwrap_or_default();
 
-    if timed_out {
-        return Err(format!("command timed out after {}s", timeout.as_secs()));
-    }
     let status = status.expect("non-timeout path always has an exit status");
 
     let mut combined = String::new();
@@ -543,6 +553,31 @@ mod tests {
         assert!(
             start.elapsed() < Duration::from_secs(5),
             "did not time out promptly"
+        );
+        assert!(err.contains("timed out"), "unexpected error: {err}");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn run_process_timeout_does_not_wait_for_detached_stdout_holder() {
+        let start = std::time::Instant::now();
+        let err = run_process_with_timeout(
+            "sh",
+            &[
+                "-c".into(),
+                // `setsid` moves the grandchild out of the shell's process
+                // group, so our timeout kill cannot reap it. It still inherits
+                // stdout; the timeout path must not wait for output reader
+                // threads until this sleep exits.
+                "setsid sh -c 'sleep 2' & sleep 30".into(),
+            ],
+            &std::env::temp_dir(),
+            Duration::from_millis(200),
+        )
+        .unwrap_err();
+        assert!(
+            start.elapsed() < Duration::from_secs(1),
+            "timeout waited for detached stdout holder"
         );
         assert!(err.contains("timed out"), "unexpected error: {err}");
     }
