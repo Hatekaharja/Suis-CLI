@@ -1,0 +1,84 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/suis-core",
+    "crates/suis-providers",
+    "crates/suis-agent",
+    "crates/suis-cli",
+]
+
+# The workspace root is also a thin package whose only purpose is to host the
+# cross-crate integration tests under `tests/integration/`. It has an empty
+# library and no business logic of its own.
+[package]
+name = "suis"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+# Only the explicitly-declared integration tests below are test targets.
+autotests = false
+autobins = false
+autobenches = false
+autoexamples = false
+
+[lib]
+path = "src/lib.rs"
+
+[dev-dependencies]
+suis-core = { workspace = true }
+suis-providers = { workspace = true }
+suis-agent = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+
+[[test]]
+name = "file_tools"
+path = "tests/integration/file_tools.rs"
+
+[[test]]
+name = "permission_flow"
+path = "tests/integration/permission_flow.rs"
+
+[[test]]
+name = "provider_discovery"
+path = "tests/integration/provider_discovery.rs"
+
+[workspace.package]
+version = "0.1.4"
+edition = "2021"
+license = "MIT"
+authors = ["Suis contributors"]
+repository = "https://github.com/suis/suis"
+
+[workspace.dependencies]
+# Internal crates
+suis-core = { path = "crates/suis-core" }
+suis-providers = { path = "crates/suis-providers" }
+suis-agent = { path = "crates/suis-agent" }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Error handling
+thiserror = "2"
+
+# Filesystem paths
+dirs = "6"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+tokio-stream = "0.1"
+futures = "0.3"
+
+# HTTP
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
+async-trait = "0.1"
+
+# Terminal UI
+# `unstable-rendered-line-info` exposes `Paragraph::line_count`, which the chat
+# transcript uses to compute the wrapped height for stick-to-bottom scrolling.
+ratatui = { version = "0.29", features = ["unstable-rendered-line-info"] }
+crossterm = "0.28"

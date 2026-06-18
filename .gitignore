@@ -1,0 +1,14 @@
+# Rust build artifacts
+/target
+
+# Backup files from rustfmt
+**/*.rs.bk
+
+# Editor/OS noise
+.DS_Store
+*.swp
+
+# Extra
+.claude
+.suis
+/SUIS_PROJECT_PLANS

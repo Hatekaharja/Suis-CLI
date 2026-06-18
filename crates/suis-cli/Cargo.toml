@@ -1,0 +1,29 @@
+[package]
+name = "suis-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "suis"
+path = "src/main.rs"
+
+[dependencies]
+suis-core = { workspace = true }
+suis-providers = { workspace = true }
+suis-agent = { workspace = true }
+ratatui = { workspace = true }
+crossterm = { workspace = true }
+tokio = { workspace = true }
+tokio-stream = { workspace = true }
+serde_json = { workspace = true }
+# System clipboard for `/developer` Ctrl+Y copy. Default features off to skip the
+# heavy `image` dep; `wayland-data-control` keeps both X11 and Wayland working.
+arboard = { version = "3", default-features = false, features = ["wayland-data-control"] }
+
+[target.'cfg(unix)'.dependencies]
+# Used only to read the system's local timezone for the welcome tagline
+# (`localtime_r`); std exposes no local-time conversion.
+libc = "0.2"
