@@ -46,11 +46,11 @@ name = "provider_discovery"
 path = "tests/integration/provider_discovery.rs"
 
 [workspace.package]
-version = "0.1.4"
-edition = "2021"
+version = "0.1.0"
+edition = "2024"
 license = "MIT"
 authors = ["Suis contributors"]
-repository = "https://github.com/suis/suis"
+repository = "https://github.com/Hatekaharja/Suis-CLI/"
 
 [workspace.dependencies]
 # Internal crates
